@@ -51,6 +51,8 @@ class SampleRepository(private val db: AppDatabase) {
     fun observeActivities(category: String): Flow<List<ActivityEntity>> =
         activityDao.observeByCategory(category)
 
+    suspend fun addActivity(activity: ActivityEntity): Long = activityDao.insert(activity)
+
     /**
      * Seeds preferences + ~54 dummy activities the first time the app runs.
      */

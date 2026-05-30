@@ -12,6 +12,9 @@ interface ActivityDao {
     @Insert
     suspend fun insertAll(activities: List<ActivityEntity>)
 
+    @Insert
+    suspend fun insert(activity: ActivityEntity): Long
+
     @Query("SELECT * FROM activities ORDER BY id DESC")
     fun observeAll(): Flow<List<ActivityEntity>>
 

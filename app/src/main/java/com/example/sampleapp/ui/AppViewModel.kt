@@ -93,6 +93,48 @@ class AppViewModel(app: Application) : AndroidViewModel(app) {
         }
     }
 
+    fun updateProfile(
+        name: String,
+        username: String,
+        phone: String,
+        city: String,
+        membershipLevel: String,
+        onDone: () -> Unit
+    ) {
+        val id = _currentUserId.value ?: return
+        viewModelScope.launch {
+            repository.getUser(id)?.let {
+                repository.updateUser(
+                    it.copy(
+                        name = name.ifBlank { it.name },
+                        username = username.ifBlank { null },
+                        phone = phone.ifBlank { null },
+                        city = city.ifBlank { null },
+                        membershipLevel = membershipLevel.ifBlank { it.membershipLevel }
+                    )
+                )
+            }
+            onDone()
+        }
+    }
+
+    // ---- Activities ----
+    fun addActivity(title: String, subtitle: String, category: String, amount: String = "") {
+        viewModelScope.launch {
+            val time = java.text.SimpleDateFormat("HH:mm", java.util.Locale.US)
+                .format(java.util.Date())
+            repository.addActivity(
+                ActivityEntity(
+                    title = title,
+                    subtitle = subtitle,
+                    category = category,
+                    amount = amount,
+                    timestamp = time
+                )
+            )
+        }
+    }
+
     // ---- Preferences ----
     fun setDarkMode(enabled: Boolean) = updatePrefs { it.copy(darkMode = enabled) }
     fun setNotifications(enabled: Boolean) = updatePrefs { it.copy(notificationsEnabled = enabled) }

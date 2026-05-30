@@ -18,50 +18,37 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.testTag
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 
 @Composable
-fun CreateActionDialog(onDismiss: () -> Unit) {
-    var selected by remember { mutableStateOf<String?>(null) }
-
+fun CreateActionDialog(
+    onDismiss: () -> Unit,
+    onCreate: (String) -> Unit
+) {
     AlertDialog(
         onDismissRequest = onDismiss,
         modifier = Modifier.testTag("create_dialog"),
         title = { Text("Quick Create") },
         text = {
             Column {
-                if (selected != null) {
-                    Text(
-                        text = "Selected: $selected (dummy action)",
-                        color = MaterialTheme.colorScheme.primary,
-                        modifier = Modifier.padding(bottom = 8.dp)
-                    )
-                }
-                DialogOption("Create Task", Icons.Filled.AddTask, "opt_create_task") {
-                    selected = "Create Task"
-                }
-                DialogOption("Add Note", Icons.Filled.NoteAdd, "opt_add_note") {
-                    selected = "Add Note"
-                }
-                DialogOption("Upload File", Icons.Filled.UploadFile, "opt_upload_file") {
-                    selected = "Upload File"
-                }
+                Text(
+                    text = "Pick an action — it will be added to your feed.",
+                    fontSize = 13.sp,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    modifier = Modifier.padding(bottom = 8.dp)
+                )
+                DialogOption("Create Task", Icons.Filled.AddTask, "opt_create_task") { onCreate("Create Task") }
+                DialogOption("Add Note", Icons.Filled.NoteAdd, "opt_add_note") { onCreate("Add Note") }
+                DialogOption("Upload File", Icons.Filled.UploadFile, "opt_upload_file") { onCreate("Upload File") }
             }
         },
         confirmButton = {
-            TextButton(onClick = onDismiss, modifier = Modifier.testTag("dialog_done")) {
-                Text("Done")
-            }
-        },
-        dismissButton = {
             TextButton(onClick = onDismiss, modifier = Modifier.testTag("dialog_cancel")) {
                 Text("Cancel")
             }
@@ -86,6 +73,6 @@ private fun DialogOption(
     ) {
         Icon(icon, contentDescription = null, tint = MaterialTheme.colorScheme.primary)
         Spacer(Modifier.width(16.dp))
-        Text(label)
+        Text(label, fontWeight = FontWeight.Medium)
     }
 }

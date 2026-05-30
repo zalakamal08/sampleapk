@@ -1,6 +1,7 @@
 package com.example.sampleapp.ui.screens.dashboard
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -42,12 +43,14 @@ import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.example.sampleapp.data.entity.ActivityEntity
 import com.example.sampleapp.ui.AppViewModel
+import com.example.sampleapp.ui.components.ItemDetailDialog
 
 private val filters = listOf("All", "Activity", "Notification", "Transaction", "Order")
 
 @Composable
 fun ActivityTab(viewModel: AppViewModel) {
     var selectedFilter by remember { mutableStateOf("All") }
+    var selectedActivity by remember { mutableStateOf<ActivityEntity?>(null) }
     val activities by viewModel.observeActivities().collectAsStateWithLifecycle(initialValue = emptyList())
 
     val filtered = if (selectedFilter == "All") activities
@@ -81,17 +84,22 @@ fun ActivityTab(viewModel: AppViewModel) {
             verticalArrangement = Arrangement.spacedBy(10.dp)
         ) {
             items(filtered, key = { it.id }) { activity ->
-                ActivityRow(activity)
+                ActivityRow(activity) { selectedActivity = activity }
             }
         }
+    }
+
+    selectedActivity?.let {
+        ItemDetailDialog(activity = it, onDismiss = { selectedActivity = null })
     }
 }
 
 @Composable
-private fun ActivityRow(activity: ActivityEntity) {
+private fun ActivityRow(activity: ActivityEntity, onClick: () -> Unit) {
     Card(
         modifier = Modifier
             .fillMaxWidth()
+            .clickable(onClick = onClick)
             .testTag("activity_item_${activity.id}")
     ) {
         Row(

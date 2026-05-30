@@ -9,6 +9,7 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
@@ -16,6 +17,7 @@ import androidx.compose.material.icons.filled.DarkMode
 import androidx.compose.material.icons.filled.Info
 import androidx.compose.material.icons.filled.Language
 import androidx.compose.material.icons.filled.Notifications
+import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Card
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -26,6 +28,7 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -47,6 +50,7 @@ private val languages = listOf("English", "Spanish", "French", "German", "Hindi"
 fun SettingsTab(viewModel: AppViewModel) {
     val prefs by viewModel.preferences.collectAsStateWithLifecycle()
     var languageExpanded by remember { mutableStateOf(false) }
+    var showAbout by remember { mutableStateOf(false) }
 
     Column(
         modifier = Modifier
@@ -120,6 +124,7 @@ fun SettingsTab(viewModel: AppViewModel) {
 
         Card(modifier = Modifier
             .fillMaxWidth()
+            .clickable { showAbout = true }
             .testTag("about_app")) {
             Row(
                 modifier = Modifier
@@ -140,6 +145,50 @@ fun SettingsTab(viewModel: AppViewModel) {
             }
         }
         Spacer(Modifier.height(24.dp))
+    }
+
+    if (showAbout) {
+        AlertDialog(
+            onDismissRequest = { showAbout = false },
+            modifier = Modifier.testTag("about_dialog"),
+            icon = { Icon(Icons.Filled.Info, contentDescription = null, tint = MaterialTheme.colorScheme.primary) },
+            title = { Text("About SampleApk") },
+            text = {
+                Column {
+                    AboutLine("Version", "1.0.0")
+                    AboutLine("Build", "Offline / Debug-Release")
+                    AboutLine("Package", "com.example.sampleapp")
+                    AboutLine("Database", "Room (SQLite) · local")
+                    AboutLine("UI", "Jetpack Compose · Material 3")
+                    Spacer(Modifier.height(8.dp))
+                    Text(
+                        "A sample application for mobile UI automation, accessibility, " +
+                            "gesture, and agent testing. No internet required.",
+                        fontSize = 12.sp,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                }
+            },
+            confirmButton = {
+                TextButton(onClick = { showAbout = false }, modifier = Modifier.testTag("about_close")) {
+                    Text("Close")
+                }
+            }
+        )
+    }
+}
+
+@Composable
+private fun AboutLine(label: String, value: String) {
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(vertical = 3.dp),
+        horizontalArrangement = Arrangement.SpaceBetween
+    ) {
+        Text(label, fontSize = 13.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
+        Spacer(Modifier.width(12.dp))
+        Text(value, fontSize = 13.sp, fontWeight = FontWeight.Medium)
     }
 }
 

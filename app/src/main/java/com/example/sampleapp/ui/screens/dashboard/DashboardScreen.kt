@@ -26,6 +26,8 @@ import androidx.compose.material3.NavigationBar
 import androidx.compose.material3.NavigationBarItem
 import androidx.compose.material3.NavigationDrawerItem
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.SnackbarHost
+import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.rememberDrawerState
@@ -65,6 +67,13 @@ fun DashboardScreen(
     var showFabDialog by remember { mutableStateOf(false) }
     val drawerState = rememberDrawerState(initialValue = DrawerValue.Closed)
     val scope = rememberCoroutineScope()
+    val snackbarHostState = remember { SnackbarHostState() }
+    val onMessage: (String) -> Unit = { msg ->
+        scope.launch {
+            snackbarHostState.currentSnackbarData?.dismiss()
+            snackbarHostState.showSnackbar(msg)
+        }
+    }
 
     val userId by viewModel.currentUserId.collectAsState()
     val user by viewModel.observeUser(userId ?: -1L).let { flow ->
@@ -111,6 +120,7 @@ fun DashboardScreen(
     ) {
         Scaffold(
             modifier = Modifier.testTag("dashboard_screen"),
+            snackbarHost = { SnackbarHost(snackbarHostState) },
             topBar = {
                 TopAppBar(
                     title = { Text(TABS[selectedTab].label) },
@@ -167,9 +177,9 @@ fun DashboardScreen(
                     .padding(innerPadding)
             ) {
                 when (selectedTab) {
-                    0 -> HomeTab(viewModel = viewModel, displayName = displayName)
+                    0 -> HomeTab(viewModel = viewModel, displayName = displayName, onMessage = onMessage)
                     1 -> ActivityTab(viewModel = viewModel)
-                    2 -> ProfileTab(user = user, onLogout = onLogout)
+                    2 -> ProfileTab(viewModel = viewModel, user = user, onLogout = onLogout, onMessage = onMessage)
                     3 -> SettingsTab(viewModel = viewModel)
                 }
             }
@@ -177,6 +187,24 @@ fun DashboardScreen(
     }
 
     if (showFabDialog) {
-        CreateActionDialog(onDismiss = { showFabDialog = false })
+        CreateActionDialog(
+            onDismiss = { showFabDialog = false },
+            onCreate = { action ->
+                when (action) {
+                    "Create Task" -> viewModel.addActivity(
+                        "New task created", "Added from Quick Create", "Activity"
+                    )
+                    "Add Note" -> viewModel.addActivity(
+                        "Note added", "Saved to your notes", "Activity"
+                    )
+                    "Upload File" -> viewModel.addActivity(
+                        "File uploaded", "document.pdf · 1.2 MB", "Activity"
+                    )
+                }
+                showFabDialog = false
+                selectedTab = 0
+                onMessage("$action — done")
+            }
+        )
     }
 }

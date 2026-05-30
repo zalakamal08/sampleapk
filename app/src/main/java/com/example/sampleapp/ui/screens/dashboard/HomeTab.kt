@@ -43,6 +43,9 @@ import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -54,6 +57,10 @@ import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.example.sampleapp.data.entity.ActivityEntity
 import com.example.sampleapp.ui.AppViewModel
+import com.example.sampleapp.ui.components.DetailBottomSheet
+import com.example.sampleapp.ui.components.DetailScreen
+import com.example.sampleapp.ui.components.ItemDetailDialog
+import com.example.sampleapp.ui.components.MockCatalog
 
 private data class CarouselCard(val title: String, val subtitle: String, val icon: ImageVector, val color: Color)
 private data class Stat(val label: String, val value: String, val icon: ImageVector, val color: Color)
@@ -84,8 +91,15 @@ private val quickActions = listOf(
 )
 
 @Composable
-fun HomeTab(viewModel: AppViewModel, displayName: String) {
+fun HomeTab(
+    viewModel: AppViewModel,
+    displayName: String,
+    onMessage: (String) -> Unit = {}
+) {
     val activities by viewModel.observeActivities().collectAsStateWithLifecycle(initialValue = emptyList())
+
+    var detail by remember { mutableStateOf<DetailScreen?>(null) }
+    var selectedActivity by remember { mutableStateOf<ActivityEntity?>(null) }
 
     LazyColumn(
         modifier = Modifier
@@ -94,23 +108,34 @@ fun HomeTab(viewModel: AppViewModel, displayName: String) {
         contentPadding = PaddingValues(16.dp),
         verticalArrangement = Arrangement.spacedBy(16.dp)
     ) {
-        item { TopSection(displayName) }
+        item { TopSection(displayName) { detail = MockCatalog.forStat("Notifications") } }
         item { SectionTitle("Explore") }
-        item { Carousel() }
+        item { Carousel { detail = MockCatalog.forCarousel(it) } }
         item { SectionTitle("Statistics") }
-        item { StatisticsGrid() }
+        item { StatisticsGrid { detail = MockCatalog.forStat(it) } }
         item { SectionTitle("Quick Actions") }
-        item { QuickActionsGrid() }
+        item { QuickActionsGrid { detail = MockCatalog.forQuickAction(it) } }
         item { SectionTitle("Recent Feed") }
         items(activities, key = { it.id }) { activity ->
-            FeedRow(activity)
+            FeedRow(activity) { selectedActivity = activity }
         }
         item { Spacer(Modifier.height(72.dp)) }
+    }
+
+    detail?.let {
+        DetailBottomSheet(
+            detail = it,
+            onDismiss = { detail = null },
+            onEntryClick = { entry -> onMessage("Opened: ${entry.title}") }
+        )
+    }
+    selectedActivity?.let {
+        ItemDetailDialog(activity = it, onDismiss = { selectedActivity = null })
     }
 }
 
 @Composable
-private fun TopSection(displayName: String) {
+private fun TopSection(displayName: String, onNotificationClick: () -> Unit) {
     Row(
         modifier = Modifier
             .fillMaxWidth()
@@ -134,7 +159,11 @@ private fun TopSection(displayName: String) {
             Text("Welcome back,", fontSize = 13.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
             Text(displayName, fontSize = 18.sp, fontWeight = FontWeight.Bold)
         }
-        Surface(shape = CircleShape, color = MaterialTheme.colorScheme.surfaceVariant) {
+        Surface(
+            shape = CircleShape,
+            color = MaterialTheme.colorScheme.surfaceVariant,
+            modifier = Modifier.clickable(onClick = onNotificationClick)
+        ) {
             Box(modifier = Modifier.size(44.dp), contentAlignment = Alignment.Center) {
                 Icon(
                     Icons.Filled.Notifications,
@@ -157,7 +186,7 @@ private fun SectionTitle(title: String) {
 }
 
 @Composable
-private fun Carousel() {
+private fun Carousel(onCardClick: (String) -> Unit) {
     val pagerState = rememberPagerState(pageCount = { carouselCards.size })
     HorizontalPager(
         state = pagerState,
@@ -173,6 +202,7 @@ private fun Carousel() {
             modifier = Modifier
                 .fillMaxWidth()
                 .height(140.dp)
+                .clickable { onCardClick(card.title) }
                 .testTag("carousel_card_${card.title.lowercase()}")
         ) {
             Column(modifier = Modifier.padding(20.dp)) {
@@ -186,12 +216,12 @@ private fun Carousel() {
 }
 
 @Composable
-private fun StatisticsGrid() {
+private fun StatisticsGrid(onStatClick: (String) -> Unit) {
     Column(verticalArrangement = Arrangement.spacedBy(12.dp), modifier = Modifier.testTag("stats_section")) {
         stats.chunked(2).forEach { rowStats ->
             Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
                 rowStats.forEach { stat ->
-                    StatCard(stat, modifier = Modifier.weight(1f))
+                    StatCard(stat, modifier = Modifier.weight(1f), onClick = { onStatClick(stat.label) })
                 }
             }
         }
@@ -199,8 +229,12 @@ private fun StatisticsGrid() {
 }
 
 @Composable
-private fun StatCard(stat: Stat, modifier: Modifier = Modifier) {
-    Card(modifier = modifier.testTag("stat_${stat.label.replace(" ", "_").lowercase()}")) {
+private fun StatCard(stat: Stat, modifier: Modifier = Modifier, onClick: () -> Unit) {
+    Card(
+        modifier = modifier
+            .clickable(onClick = onClick)
+            .testTag("stat_${stat.label.replace(" ", "_").lowercase()}")
+    ) {
         Column(modifier = Modifier.padding(16.dp)) {
             Box(
                 modifier = Modifier
@@ -218,12 +252,12 @@ private fun StatCard(stat: Stat, modifier: Modifier = Modifier) {
 }
 
 @Composable
-private fun QuickActionsGrid() {
+private fun QuickActionsGrid(onActionClick: (String) -> Unit) {
     Column(verticalArrangement = Arrangement.spacedBy(12.dp), modifier = Modifier.testTag("quick_actions")) {
         quickActions.chunked(3).forEach { rowActions ->
             Row(horizontalArrangement = Arrangement.spacedBy(12.dp), modifier = Modifier.fillMaxWidth()) {
                 rowActions.forEach { action ->
-                    QuickActionButton(action, modifier = Modifier.weight(1f))
+                    QuickActionButton(action, modifier = Modifier.weight(1f), onClick = { onActionClick(action.label) })
                 }
             }
         }
@@ -231,11 +265,11 @@ private fun QuickActionsGrid() {
 }
 
 @Composable
-private fun QuickActionButton(action: QuickAction, modifier: Modifier = Modifier) {
+private fun QuickActionButton(action: QuickAction, modifier: Modifier = Modifier, onClick: () -> Unit) {
     Card(
         modifier = modifier
             .aspectRatio(1f)
-            .clickable { }
+            .clickable(onClick = onClick)
             .testTag(action.tag)
     ) {
         Column(
@@ -253,10 +287,11 @@ private fun QuickActionButton(action: QuickAction, modifier: Modifier = Modifier
 }
 
 @Composable
-private fun FeedRow(activity: ActivityEntity) {
+private fun FeedRow(activity: ActivityEntity, onClick: () -> Unit) {
     Card(
         modifier = Modifier
             .fillMaxWidth()
+            .clickable(onClick = onClick)
             .testTag("feed_item_${activity.id}")
     ) {
         Row(

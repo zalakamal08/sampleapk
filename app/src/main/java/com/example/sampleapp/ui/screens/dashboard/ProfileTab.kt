@@ -1,7 +1,6 @@
 package com.example.sampleapp.ui.screens.dashboard
 
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -26,12 +25,16 @@ import androidx.compose.material.icons.filled.Phone
 import androidx.compose.material.icons.filled.Shield
 import androidx.compose.material.icons.filled.Star
 import androidx.compose.material3.Card
-import androidx.compose.material3.Divider
+import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.vector.ImageVector
@@ -40,6 +43,10 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.sampleapp.data.entity.UserEntity
+import com.example.sampleapp.ui.AppViewModel
+import com.example.sampleapp.ui.components.DetailBottomSheet
+import com.example.sampleapp.ui.components.DetailScreen
+import com.example.sampleapp.ui.components.MockCatalog
 
 private data class ProfileItem(val label: String, val icon: ImageVector, val tag: String)
 
@@ -52,7 +59,15 @@ private val profileSections = listOf(
 )
 
 @Composable
-fun ProfileTab(user: UserEntity?, onLogout: () -> Unit) {
+fun ProfileTab(
+    viewModel: AppViewModel,
+    user: UserEntity?,
+    onLogout: () -> Unit,
+    onMessage: (String) -> Unit = {}
+) {
+    var detail by remember { mutableStateOf<DetailScreen?>(null) }
+    var showEdit by remember { mutableStateOf(false) }
+
     Column(
         modifier = Modifier
             .fillMaxSize()
@@ -92,9 +107,9 @@ fun ProfileTab(user: UserEntity?, onLogout: () -> Unit) {
             .testTag("profile_info_card")) {
             Column(modifier = Modifier.padding(16.dp)) {
                 InfoRow(Icons.Filled.Email, "Email", user?.email ?: "guest@example.com")
-                Divider(modifier = Modifier.padding(vertical = 10.dp))
+                HorizontalDivider(modifier = Modifier.padding(vertical = 10.dp))
                 InfoRow(Icons.Filled.Phone, "Phone", user?.phone ?: "Not provided")
-                Divider(modifier = Modifier.padding(vertical = 10.dp))
+                HorizontalDivider(modifier = Modifier.padding(vertical = 10.dp))
                 InfoRow(Icons.Filled.Person, "Username", user?.username ?: "Not set")
             }
         }
@@ -104,12 +119,40 @@ fun ProfileTab(user: UserEntity?, onLogout: () -> Unit) {
         Card(modifier = Modifier.fillMaxWidth()) {
             Column {
                 profileSections.forEach { item ->
-                    SettingRow(item.label, item.icon, item.tag) {}
+                    SettingRow(item.label, item.icon, item.tag) {
+                        when (item.label) {
+                            "Edit Profile" -> showEdit = true
+                            "Security" -> detail = MockCatalog.securitySettings()
+                            "Privacy" -> detail = MockCatalog.privacySettings()
+                            "Notifications" -> detail = MockCatalog.notificationSettings()
+                            "Help Center" -> detail = MockCatalog.helpCenter()
+                        }
+                    }
                 }
                 SettingRow("Logout", Icons.AutoMirrored.Filled.Logout, "profile_logout", onClick = onLogout)
             }
         }
         Spacer(Modifier.height(24.dp))
+    }
+
+    detail?.let {
+        DetailBottomSheet(
+            detail = it,
+            onDismiss = { detail = null },
+            onEntryClick = { entry -> onMessage("Opened: ${entry.title}") }
+        )
+    }
+
+    if (showEdit) {
+        EditProfileSheet(
+            viewModel = viewModel,
+            user = user,
+            onDismiss = { showEdit = false },
+            onSaved = {
+                showEdit = false
+                onMessage("Profile updated")
+            }
+        )
     }
 }
 
