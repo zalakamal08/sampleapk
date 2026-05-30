@@ -31,8 +31,15 @@ fun AppNavHost(appViewModel: AppViewModel = viewModel()) {
         composable(Routes.AUTH) {
             AuthScreen(
                 viewModel = appViewModel,
-                onAuthenticated = {
-                    navController.navigate(Routes.TERMS)
+                onAuthenticated = { onboarded ->
+                    if (onboarded) {
+                        // Returning / demo accounts already accepted terms and set up.
+                        navController.navigate(Routes.DASHBOARD) {
+                            popUpTo(Routes.AUTH) { inclusive = true }
+                        }
+                    } else {
+                        navController.navigate(Routes.TERMS)
+                    }
                 }
             )
         }

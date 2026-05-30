@@ -1,6 +1,7 @@
 package com.example.sampleapp.data
 
 import com.example.sampleapp.data.entity.ActivityEntity
+import com.example.sampleapp.data.entity.UserEntity
 
 /**
  * Deterministic, fully offline dummy data generator. Produces realistic-looking
@@ -57,6 +58,34 @@ object DummyData {
     private val people = listOf(
         "Alex Morgan", "Priya Sharma", "Liu Wei", "Sara Khan",
         "John Carter", "Maria Garcia", "Tom Becker", "Aisha Bello"
+    )
+
+    /**
+     * Two ready-to-use demo accounts seeded on first launch. Both have already
+     * accepted the terms and completed setup, so logging in lands straight on the
+     * dashboard. Credentials are intentionally simple (sample app, local-only).
+     */
+    fun users(): List<UserEntity> = listOf(
+        UserEntity(
+            name = "Demo User",
+            email = "demo@example.com",
+            password = "demo1234",
+            username = "demo_user",
+            phone = "+1 (555) 014-2237",
+            city = "San Francisco",
+            membershipLevel = "Gold",
+            acceptedTerms = true
+        ),
+        UserEntity(
+            name = "Jane Cooper",
+            email = "jane@example.com",
+            password = "jane1234",
+            username = "jane_cooper",
+            phone = "+44 20 7946 0991",
+            city = "London",
+            membershipLevel = "Platinum",
+            acceptedTerms = true
+        )
     )
 
     /**

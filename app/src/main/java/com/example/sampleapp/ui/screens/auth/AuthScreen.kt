@@ -40,7 +40,7 @@ import com.example.sampleapp.ui.AppViewModel
 @Composable
 fun AuthScreen(
     viewModel: AppViewModel,
-    onAuthenticated: () -> Unit
+    onAuthenticated: (onboarded: Boolean) -> Unit
 ) {
     var selectedTab by remember { mutableIntStateOf(0) }
 
@@ -92,7 +92,7 @@ fun AuthScreen(
 }
 
 @Composable
-private fun LoginForm(viewModel: AppViewModel, onAuthenticated: () -> Unit) {
+private fun LoginForm(viewModel: AppViewModel, onAuthenticated: (Boolean) -> Unit) {
     var email by remember { mutableStateOf("") }
     var password by remember { mutableStateOf("") }
     var error by remember { mutableStateOf<String?>(null) }
@@ -132,7 +132,7 @@ private fun LoginForm(viewModel: AppViewModel, onAuthenticated: () -> Unit) {
                 error = validateLogin(email, password)
                 if (error == null) {
                     viewModel.login(email.trim(), password) { result ->
-                        result.onSuccess { onAuthenticated() }
+                        result.onSuccess { onboarded -> onAuthenticated(onboarded) }
                             .onFailure { error = it.message }
                     }
                 }
@@ -145,15 +145,19 @@ private fun LoginForm(viewModel: AppViewModel, onAuthenticated: () -> Unit) {
             Text("Login")
         }
         Text(
-            text = "Tip: create an account first via the Sign Up tab.",
+            text = "Demo accounts (already set up):\n" +
+                "• demo@example.com / demo1234\n" +
+                "• jane@example.com / jane1234\n" +
+                "Or create your own via the Sign Up tab.",
             fontSize = 12.sp,
-            color = MaterialTheme.colorScheme.onSurfaceVariant
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+            modifier = Modifier.testTag("login_hint")
         )
     }
 }
 
 @Composable
-private fun SignUpForm(viewModel: AppViewModel, onAuthenticated: () -> Unit) {
+private fun SignUpForm(viewModel: AppViewModel, onAuthenticated: (Boolean) -> Unit) {
     var name by remember { mutableStateOf("") }
     var email by remember { mutableStateOf("") }
     var password by remember { mutableStateOf("") }
@@ -217,7 +221,7 @@ private fun SignUpForm(viewModel: AppViewModel, onAuthenticated: () -> Unit) {
                 error = validateSignUp(name, email, password, confirm)
                 if (error == null) {
                     viewModel.register(name.trim(), email.trim(), password) { result ->
-                        result.onSuccess { onAuthenticated() }
+                        result.onSuccess { onAuthenticated(false) }
                             .onFailure { error = it.message }
                     }
                 }

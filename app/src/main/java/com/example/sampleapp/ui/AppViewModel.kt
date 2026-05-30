@@ -39,11 +39,13 @@ class AppViewModel(app: Application) : AndroidViewModel(app) {
         repository.observeActivities(category)
 
     // ---- Auth ----
-    fun login(email: String, password: String, onResult: (Result<Long>) -> Unit) {
+    // onResult carries whether the account is already onboarded (accepted terms),
+    // so the UI can route straight to the dashboard for returning/demo users.
+    fun login(email: String, password: String, onResult: (Result<Boolean>) -> Unit) {
         viewModelScope.launch {
             val result = repository.login(email, password)
             result.onSuccess { _currentUserId.value = it.id }
-            onResult(result.map { it.id })
+            onResult(result.map { it.acceptedTerms })
         }
     }
 

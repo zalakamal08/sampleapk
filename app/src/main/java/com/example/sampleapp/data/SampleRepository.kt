@@ -60,6 +60,9 @@ class SampleRepository(private val db: AppDatabase) {
         if (prefsDao.get() == null) {
             prefsDao.upsert(PreferencesEntity())
         }
+        if (userDao.count() == 0) {
+            DummyData.users().forEach { userDao.insert(it) }
+        }
         if (activityDao.count() == 0) {
             activityDao.insertAll(DummyData.activities())
         }

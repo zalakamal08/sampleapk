@@ -37,6 +37,22 @@ to make automation reliable.
 
 ---
 
+## 🔑 Demo Accounts
+
+Two accounts are **seeded automatically on first launch** so you can log in without
+signing up. They are already onboarded (terms accepted + profile filled), so logging
+in goes **straight to the dashboard**:
+
+| Email | Password | Name | Membership | City |
+|-------|----------|------|------------|------|
+| `demo@example.com` | `demo1234` | Demo User | Gold | San Francisco |
+| `jane@example.com` | `jane1234` | Jane Cooper | Platinum | London |
+
+You can also create your own account via the **Sign Up** tab (new accounts go through
+the Terms → Setup flow). All credentials are stored locally in Room — nothing leaves the device.
+
+---
+
 ## 🗄️ Local Database (Room)
 
 Three tables, seeded automatically on first launch:
